@@ -164,6 +164,14 @@ run_custom_installation() {
   fi
   echo ""
   
+  # Security (SSH/GPG keys)
+  if read -p "Setup SSH and GPG keys? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    selected_scripts+=("scripts/security/ssh-keys.sh")
+    selected_scripts+=("scripts/security/gpg-keys.sh")
+  fi
+  echo ""
+  
   # Shell setup
   if read -p "Setup Zsh environment? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
@@ -200,6 +208,24 @@ run_custom_installation() {
   fi
   echo ""
   
+  # tmux
+  if read -p "Setup tmux with nikolovlazar's config? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    selected_scripts+=("scripts/development/tmux.sh")
+    selected_configs+=("configs/tmux")
+  fi
+  echo ""
+  
+  # Neovim
+  if read -p "Setup Neovim with nikolovlazar's config? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    selected_scripts+=("scripts/development/neovim.sh")
+    selected_scripts+=("scripts/development/neovim-config.sh")
+    selected_scripts+=("scripts/development/lazygit.sh")
+    selected_configs+=("configs/nvim")
+  fi
+  echo ""
+  
   # VSCode
   if read -p "Setup VSCode? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
@@ -212,6 +238,13 @@ run_custom_installation() {
   if read -p "Setup development tools (SSH connections)? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
     echo ""
     selected_configs+=("configs/development")
+  fi
+  echo ""
+  
+  # WordPress WSL dependencies
+  if read -p "Setup WordPress Local WP dependencies for WSL? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo ""
+    selected_scripts+=("scripts/development/wordpress-wsl.sh")
   fi
   echo ""
   

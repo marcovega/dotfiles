@@ -4,3 +4,6 @@ configs/development/.env.ssh-connections
 
 # Git configuration (contains personal details)
 configs/git/.env.git
+
+# GPG public key (contains personal details)
+gpg-public-key.txt

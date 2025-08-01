@@ -143,8 +143,21 @@ if [[ -d "$HOME/.config/composer/vendor/bin" ]]; then
   export PATH="$HOME/.config/composer/vendor/bin:$PATH"
 fi
 
+# Neovim
+if [[ -d "/opt/nvim/bin" ]]; then
+  export PATH="/opt/nvim/bin:$PATH"
+fi
+
 # Laravel Sail alias
 alias sail="[ -f sail ] && sh sail || sh vendor/bin/sail"
+
+# fzf shell integration
+if command -v fzf >/dev/null 2>&1; then
+  # Key bindings
+  source /usr/share/fzf/key-bindings.zsh 2>/dev/null || true
+  # Completion
+  source /usr/share/fzf/completion.zsh 2>/dev/null || true
+fi
 
 # SSH connection aliases
 if [[ -f "${ZDOTDIR:-$HOME}/.ssh-connections" ]]; then

@@ -20,9 +20,17 @@ dotfiles/
 │   ├── system/
 │   │   ├── packages.sh           # Idempotent package installation
 │   │   └── generate-configs.sh   # Generate configs from templates
+│   ├── security/
+│   │   ├── ssh-keys.sh          # SSH key generation and agent setup
+│   │   └── gpg-keys.sh          # GPG key generation and git config
 │   ├── development/
 │   │   ├── node.sh              # Node.js/fnm setup
 │   │   ├── php.sh               # PHP 8.4/Laravel setup
+│   │   ├── neovim.sh            # Neovim stable installation
+│   │   ├── neovim-config.sh     # Latest config from nikolovlazar/dotfiles
+│   │   ├── tmux.sh              # Latest config from nikolovlazar/dotfiles
+│   │   ├── lazygit.sh           # LazyGit installation from GitHub releases
+│   │   ├── wordpress-wsl.sh     # WordPress Local WP dependencies for WSL2
 │   │   └── vscode.sh            # VSCode extensions installer
 │   └── shell/
 │       └── zsh-setup.sh         # Zsh + Oh My Zsh + plugins
@@ -36,6 +44,11 @@ dotfiles/
 │   │   └── env.git.example      # Example environment file
 │   ├── terminal/                # Terminal appearance
 │   │   └── .dir_colors         # Custom ls colors
+│   ├── tmux/                    # tmux configuration (from nikolovlazar)
+│   │   ├── .tmux.conf          # Always latest from nikolovlazar/dotfiles
+│   │   └── switch-catppuccin-theme.sh
+│   ├── nvim/                    # Neovim configuration (from nikolovlazar)
+│   │   └── .config/nvim/        # Always latest from nikolovlazar/dotfiles
 │   └── development/             # Development tools
 │       ├── .ssh-connections     # SSH connection manager
 │       └── .env.ssh-connections.example
@@ -91,10 +104,11 @@ cd dotfiles
 
 | Profile | Description | Includes |
 |---------|-------------|----------|
-| **Minimal** | Essential tools only | Zsh + Git + Terminal colors |
-| **Development** | Web development setup | + Node.js + VSCode |
-| **Full** | Complete development environment | + PHP/Laravel |
-| **Server** | Headless server setup | Essential tools only |
+| **Minimal** | Essential tools only | Zsh + Git + Terminal colors + SSH/GPG keys |
+| **Development** | Web development setup | + Node.js + Neovim + tmux + VSCode |
+| **WordPress** | WordPress development setup | + PHP/Laravel + WordPress WSL dependencies |
+| **Full** | Complete development environment | Everything including PHP/Laravel |
+| **Server** | Headless server setup | Essential tools + SSH/GPG keys |
 | **Custom** | Interactive component selection | Pick & choose |
 
 ### Profile Configuration
@@ -126,12 +140,48 @@ APPLICATIONS=(
 )
 ```
 
+## 🔐 Security Features
+
+### SSH Key Management
+- **Location**: `scripts/security/ssh-keys.sh`
+- **Function**: Generates ed25519 SSH keys if none exist, adds to SSH agent
+- **Features**: 
+  - Uses modern ed25519 cryptography
+  - Automatically starts SSH agent if needed
+  - Displays public key for easy copying to GitHub/GitLab
+  - Idempotent - won't overwrite existing keys
+
+### GPG Key Management
+- **Location**: `scripts/security/gpg-keys.sh`
+- **Function**: Generates 4096-bit RSA GPG keys for git commit signing
+- **Features**:
+  - Automatically configures git to use the key for signing
+  - Exports public key to gitignored file for sharing
+  - Uses batch generation for automation
+  - Idempotent - detects existing keys
+
+## 🔄 Always Up-to-Date Configurations
+
+### tmux Configuration
+- **Source**: [nikolovlazar/dotfiles](https://github.com/nikolovlazar/dotfiles/tree/main/.config/tmux)
+- **Update Method**: Downloads latest configuration on every run
+- **Files**: `tmux.conf`, `switch-catppuccin-theme.sh`
+- **Features**: Modern tmux setup with Catppuccin theme support
+
+### Neovim Configuration  
+- **Source**: [nikolovlazar/dotfiles](https://github.com/nikolovlazar/dotfiles/tree/main/.config/nvim)
+- **Update Method**: Git sparse-checkout to get latest configuration
+- **Features**: Complete LazyVim setup with modern plugins and themes
+- **Installation**: Automatically installs latest stable Neovim from GitHub releases
+
 ## 🔧 Core Components
 
 ### System Packages
 - **Location**: `scripts/system/packages.sh`
 - **Function**: Installs essential system packages
-- **Packages**: git, stow, zsh, tmux, curl, tree, etc.
+- **Packages**: git, stow, zsh, tmux, curl, tree, jq, fd-find, ripgrep, fzf, build-essential, etc.
+- **Neovim Dependencies**: fd-find (file finding), ripgrep (text search), build-essential (compilation)
+- **Fuzzy Finding**: fzf with shell integration (Ctrl+R history, Ctrl+T files, Alt+C directories)
 - **Idempotency**: Checks if packages are already installed
 
 ### Shell Environment
@@ -161,6 +211,23 @@ APPLICATIONS=(
 - **Location**: `scripts/development/vscode.sh`
 - **Function**: Installs VSCode extensions from platform-specific lists
 - **Lists**: `applications/vscode/extensions.{linux,windows}`
+
+#### LazyGit Setup
+- **Location**: `scripts/development/lazygit.sh`
+- **Function**: Installs LazyGit from GitHub releases (not in Ubuntu repos)
+- **Features**: Git TUI used by Neovim configuration
+- **Version**: Automatically installs pinned stable version
+
+#### WordPress WSL Dependencies
+- **Location**: `scripts/development/wordpress-wsl.sh`
+- **Function**: Installs all dependencies for Local WP to work in WSL2/Ubuntu
+- **Source**: Based on [Medium article](https://medium.com/@echernicky/setting-up-a-local-wp-wsl-ubuntu-environment-9e7bdc6e9dbd)
+- **Dependencies**: libtinfo5, libncurses5, libaio1, libnss3-tools, libasound2t64, libnuma1, policykit-1, libgbm-dev, xdg-utils, wslu
+- **Features**: 
+  - Automatic WSL detection (only runs in WSL environments)
+  - Browser integration setup for opening sites from WSL
+  - Idempotent installation of all required packages
+  - Comprehensive setup instructions for Local WP
 
 ### Configuration Management
 
@@ -240,6 +307,9 @@ configs/development/.env.ssh-connections
 
 # Git configuration (contains personal details)  
 configs/git/.env.git
+
+# GPG public key (contains personal details)
+gpg-public-key.txt
 ```
 
 ### Template Variables
@@ -287,8 +357,10 @@ configs/git/.env.git
 - **Features**: 
   - Powerlevel10k theme integration
   - fnm (Node.js) PATH management
+  - Neovim (/opt/nvim/bin) PATH management
   - Composer global bin PATH
   - Laravel Sail alias
+  - fzf shell integration (Ctrl+R, Ctrl+T, Alt+C)
   - SSH connections integration
   - Plugin configuration
 

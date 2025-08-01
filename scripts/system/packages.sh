@@ -38,6 +38,11 @@ packages=(
   "zsh"
   "dnsutils"
   "tmux"
+  "jq"
+  "fd-find"
+  "ripgrep"
+  "fzf"
+  "build-essential"
 )
 
 for package in "${packages[@]}"; do
