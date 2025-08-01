@@ -1,0 +1,6 @@
+# SSH connections (contains sensitive IPs and usernames)
+zsh/.env.ssh-connections
+configs/development/.env.ssh-connections
+
+# Git configuration (contains personal details)
+configs/git/.env.git

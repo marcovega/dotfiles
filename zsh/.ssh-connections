@@ -1,0 +1,86 @@
+#!/usr/bin/env zsh
+
+# SSH Connection Aliases
+# This script reads connections from .env.ssh-connections file
+# Usage: ssh-to <alias> or ssh-drop <alias>
+
+# Declare associative array for SSH connections
+typeset -A ssh_connections
+
+# Function to load connections from .env file
+load_ssh_connections() {
+    local config_file="${ZDOTDIR:-$HOME}/.env.ssh-connections"
+    local current_alias=""
+    
+    # Clear existing connections
+    ssh_connections=()
+    
+    if [[ ! -f "$config_file" ]]; then
+        echo "Warning: SSH connections file not found: $config_file"
+        echo "Copy .env.ssh-connections.example to .env.ssh-connections and customize it."
+        return 1
+    fi
+    
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        # Skip empty lines and comments
+        [[ -z "$line" || "$line" =~ ^[[:space:]]*# ]] && continue
+        
+        # Check if it's a section header [alias]
+        if [[ "${line:0:1}" == "[" && "${line: -1}" == "]" ]]; then
+            current_alias="${line:1:-1}"  # Remove [ and ]
+        # Check if it's an SSH command
+        elif [[ -n "$current_alias" && "$line" =~ ^ssh[[:space:]]+(.+)$ ]]; then
+            ssh_connections[$current_alias]="${match[1]}"
+            current_alias=""
+        fi
+    done < "$config_file"
+}
+
+# Main SSH connection function
+ssh-to() {
+    # Reload connections every time to get latest changes
+    load_ssh_connections
+    
+    if [[ $# -eq 0 ]]; then
+        echo "Available SSH connections:"
+        for alias in ${(k)ssh_connections}; do
+            echo "  ssh-to $alias  →  ssh ${ssh_connections[$alias]}"
+        done
+        return 0
+    fi
+
+    local alias_name="$1"
+    shift  # Remove first argument, pass the rest to SSH
+
+    if [[ -n "${ssh_connections[$alias_name]}" ]]; then
+        echo "Connecting to ${ssh_connections[$alias_name]} (alias: $alias_name)"
+        ssh "${ssh_connections[$alias_name]}" "$@"
+    else
+        echo "Error: SSH alias '$alias_name' not found."
+        echo "Available aliases: ${(k)ssh_connections}"
+        return 1
+    fi
+}
+
+# Convenient aliases
+alias ssh-drop='ssh-to'
+alias ssh-list='ssh-to'
+
+# Function to manually reload connections
+ssh-reload() {
+    load_ssh_connections
+    echo "SSH connections reloaded from .env.ssh-connections"
+    ssh-to  # Show updated list
+}
+
+# Tab completion for SSH aliases
+_ssh_to_completion() {
+    # Load fresh connections for tab completion
+    load_ssh_connections
+    local -a connections
+    connections=(${(k)ssh_connections})
+    _describe 'ssh connections' connections
+}
+
+compdef _ssh_to_completion ssh-to
+compdef _ssh_to_completion ssh-drop

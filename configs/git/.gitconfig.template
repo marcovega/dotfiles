@@ -1,0 +1,15 @@
+[user]
+  name = {{GIT_NAME}}
+  email = {{GIT_EMAIL}}
+  signingkey = {{GIT_SIGNING_KEY}}
+
+[branch]
+  autosetuprebase = always
+[commit]
+  gpgsign = true
+[init]
+  defaultBranch = main
+[pull]
+  rebase = true
+[push]
+  default = current
