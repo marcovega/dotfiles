@@ -43,6 +43,11 @@ else
     exit 1
   fi
   
+  # Move to expected directory structure
+  if [[ -d "/opt/nvim-linux-x86_64" ]]; then
+    sudo mv /opt/nvim-linux-x86_64 /opt/nvim
+  fi
+  
   # Clean up tarball
   rm -f "$NVIM_TARBALL"
   

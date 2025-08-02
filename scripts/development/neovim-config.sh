@@ -5,6 +5,8 @@ echo "📝 Setting up Neovim configuration from nikolovlazar's dotfiles..."
 NVIM_CONFIG_DIR="configs/nvim"
 REPO_BASE="https://raw.githubusercontent.com/nikolovlazar/dotfiles/main/.config/nvim"
 TEMP_DIR="/tmp/nvim-config-download"
+# Store the original working directory (dotfiles root)
+ORIGINAL_DIR="$(pwd)"
 
 # Create nvim config directory
 mkdir -p "$NVIM_CONFIG_DIR"
@@ -35,21 +37,27 @@ download_file() {
   fi
 }
 
-# Function to download directory recursively via GitHub API
+# Function to download neovim config with correct stow structure
 download_nvim_config() {
   echo "🔍 Fetching configuration structure..."
   
-  # Download the entire nvim config using git sparse-checkout (more reliable)
+  # Create clean structure: configs/nvim/ (will stow to ~/.config/nvim/)
+  mkdir -p "configs/nvim"
+  
+  # Download using git sparse-checkout
   cd "$TEMP_DIR"
   
   if git clone --filter=blob:none --sparse https://github.com/nikolovlazar/dotfiles.git; then
     cd dotfiles
     git sparse-checkout set .config/nvim
     
-    # Copy to our config directory
+    # Copy to the correct stow structure: configs/nvim/.config/nvim/
     if [[ -d ".config/nvim" ]]; then
       echo "📋 Copying configuration files..."
-      cp -r .config/nvim/* "$NVIM_CONFIG_DIR/"
+      # Create the proper stow directory structure
+      mkdir -p "$ORIGINAL_DIR/configs/nvim/.config/"
+      # Use the original directory where script was called from
+      cp -r .config/nvim "$ORIGINAL_DIR/configs/nvim/.config/"
       echo "✅ Neovim configuration copied successfully"
     else
       echo "❌ nvim config directory not found in repo"
@@ -66,23 +74,9 @@ if download_nvim_config; then
   # Clean up temp directory
   rm -rf "$TEMP_DIR"
   
-  # Make sure we have the right structure for stow
-  echo "🔧 Preparing configuration for stow..."
-  
-  # The files should be in configs/nvim/ and will be stowed to ~/.config/nvim/
-  # We need to create the .config/nvim structure in our configs directory
-  mkdir -p "configs/nvim/.config/nvim"
-  
-  # Move files to the correct stow structure
-  if [[ -d "$NVIM_CONFIG_DIR" ]] && [[ "$(ls -A $NVIM_CONFIG_DIR 2>/dev/null)" ]]; then
-    # If there are files directly in configs/nvim, move them to the .config/nvim subdirectory
-    find "$NVIM_CONFIG_DIR" -maxdepth 1 -type f -exec mv {} "configs/nvim/.config/nvim/" \;
-    find "$NVIM_CONFIG_DIR" -maxdepth 1 -type d ! -name ".config" ! -path "$NVIM_CONFIG_DIR" -exec mv {} "configs/nvim/.config/nvim/" \;
-  fi
-  
   echo ""
   echo "✅ Neovim configuration setup completed!"
-  echo "📁 Configuration files downloaded to: configs/nvim/.config/nvim/"
+  echo "📁 Configuration files downloaded to: configs/nvim/"
   echo "🔄 This script always downloads the latest version from nikolovlazar's repo"
   echo ""
   echo "📝 Next steps:"

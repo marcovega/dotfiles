@@ -19,17 +19,28 @@ if [[ -f "$KEY_FILE" ]]; then
 else
   echo "🔑 Generating new SSH key..."
   
-  # Get user email from git config or prompt
-  if command -v git >/dev/null 2>&1; then
+  # Get user email from environment file, git config, or prompt
+  EMAIL=""
+  
+  # Try environment file first
+  if [[ -f "configs/git/.env.git" ]]; then
+    source "configs/git/.env.git" 2>/dev/null || true
+    EMAIL="$GIT_EMAIL"
+  fi
+  
+  # Fallback to git config
+  if [[ -z "$EMAIL" ]] && command -v git >/dev/null 2>&1; then
     EMAIL=$(git config --global user.email 2>/dev/null)
   fi
   
+  # Last resort: prompt user
   if [[ -z "$EMAIL" ]]; then
     read -p "Enter your email for SSH key: " EMAIL
   fi
   
-  # Generate SSH key
-  ssh-keygen -t "$KEY_TYPE" -C "$EMAIL" -f "$KEY_FILE" -N ""
+  # Generate SSH key (will prompt for passphrase)
+  echo "📝 You'll be prompted for a passphrase (recommended for security)"
+  ssh-keygen -t "$KEY_TYPE" -C "$EMAIL" -f "$KEY_FILE"
   
   echo "✅ SSH key generated successfully!"
 fi

@@ -77,12 +77,55 @@ stow_configs() {
       local config_name=$(basename "$config")
       log_info "Stowing $config_name..."
       
+      # Determine stow target based on config type
+      local stow_target="$HOME"
+      # Handle special configs with custom stow targets
+      if [[ "$config_name" == "nvim" ]]; then
+        stow_target="$HOME/.config/nvim"
+        mkdir -p "$stow_target"
+      elif [[ "$config_name" == "tmux" ]]; then
+        stow_target="$HOME/.config/tmux"
+        mkdir -p "$stow_target"
+      fi
+      
+      # Remove conflicting files before stowing
+      case "$config_name" in
+        "shell-zsh")
+          [[ -f "$stow_target/.zshrc" ]] && rm -f "$stow_target/.zshrc"
+          [[ -f "$stow_target/.p10k.zsh" ]] && rm -f "$stow_target/.p10k.zsh"
+          log_info "Removed conflicting shell files"
+          ;;
+        "git")
+          [[ -f "$stow_target/.gitconfig" ]] && rm -f "$stow_target/.gitconfig"
+          log_info "Removed conflicting git files"
+          ;;
+        "terminal")
+          [[ -f "$stow_target/.dir_colors" ]] && rm -f "$stow_target/.dir_colors"
+          log_info "Removed conflicting terminal files"
+          ;;
+        "tmux")
+          # Clean up the entire target directory for tmux
+          rm -rf "$stow_target"/*
+          log_info "Removed conflicting tmux files"
+          ;;
+        "nvim")
+          # Clean up the entire target directory for nvim
+          rm -rf "$stow_target"/*
+          log_info "Removed conflicting nvim files"
+          ;;
+        "development")
+          [[ -f "$stow_target/.env.ssh-connections" ]] && rm -f "$stow_target/.env.ssh-connections"
+          [[ -f "$stow_target/.env.ssh-connections.example" ]] && rm -f "$stow_target/.env.ssh-connections.example"
+          log_info "Removed conflicting development files"
+          ;;
+      esac
+      
       # Unstow first to handle existing configs cleanly
-      stow -v -t ~/ -D "$config" 2>/dev/null || true
+      stow -v -d configs -t "$stow_target" -D "$config_name" 2>/dev/null || true
       
       # Then stow
-      if stow -v -t ~/ -S "$config"; then
-        log_success "✓ $config_name stowed successfully"
+      if stow -v -d configs -t "$stow_target" -S "$config_name"; then
+        log_success "✓ $config_name stowed successfully to $stow_target"
       else
         log_error "Failed to stow $config"
         exit 1
@@ -125,24 +168,23 @@ setup_applications() {
 
 # Function to handle environment files
 setup_environment_files() {
-  log_info "Setting up environment files..."
+  log_info "Checking environment files..."
   
-  # Git environment
+  # Git environment (informational only - don't block)
   if [[ ! -f "configs/git/.env.git" ]] && [[ -f "configs/git/env.git.example" ]]; then
-    log_warning "Git environment file not found!"
-    echo "Please copy configs/git/env.git.example to configs/git/.env.git and fill in your details:"
-    echo "  cp configs/git/env.git.example configs/git/.env.git"
-    echo "  nano configs/git/.env.git"
-    echo ""
-    read -p "Press Enter to continue once you've set up the git environment file..."
+    log_info "Git environment file not found - will prompt for details during key generation"
+    echo "💡 Tip: You can pre-configure git details by copying:"
+    echo "   cp configs/git/env.git.example configs/git/.env.git"
+    echo "   nano configs/git/.env.git"
+  else
+    log_info "✓ Git environment file found"
   fi
   
   # SSH connections environment
   if [[ ! -f "configs/development/.env.ssh-connections" ]] && [[ -f "configs/development/.env.ssh-connections.example" ]]; then
-    log_info "SSH connections environment file not found (this is optional)"
-    echo "If you want SSH connection shortcuts, copy the example file:"
-    echo "  cp configs/development/.env.ssh-connections.example configs/development/.env.ssh-connections"
-    echo "  nano configs/development/.env.ssh-connections"
+    log_info "SSH connections environment file not found (optional)"
+    echo "💡 Tip: For SSH shortcuts, copy and customize:"
+    echo "   cp configs/development/.env.ssh-connections.example configs/development/.env.ssh-connections"
   fi
 }
 

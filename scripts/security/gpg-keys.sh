@@ -22,21 +22,37 @@ if gpg --list-secret-keys --keyid-format LONG 2>/dev/null | grep -q "sec"; then
 else
   echo "🔑 Generating new GPG key..."
   
-  # Get user details from git config or prompt
-  if command -v git >/dev/null 2>&1; then
+  # Get user details from environment file, git config, or prompt
+  NAME=""
+  EMAIL=""
+  
+  # Try environment file first
+  if [[ -f "configs/git/.env.git" ]]; then
+    source "configs/git/.env.git" 2>/dev/null || true
+    NAME="$GIT_NAME"
+    EMAIL="$GIT_EMAIL"
+  fi
+  
+  # Fallback to git config
+  if [[ -z "$NAME" ]] && command -v git >/dev/null 2>&1; then
     NAME=$(git config --global user.name 2>/dev/null)
+  fi
+  if [[ -z "$EMAIL" ]] && command -v git >/dev/null 2>&1; then
     EMAIL=$(git config --global user.email 2>/dev/null)
   fi
   
+  # Last resort: prompt user
   if [[ -z "$NAME" ]]; then
     read -p "Enter your full name: " NAME
   fi
-  
   if [[ -z "$EMAIL" ]]; then
     read -p "Enter your email: " EMAIL
   fi
   
-  # Generate GPG key batch
+  # Generate GPG key with interactive password prompt
+  echo "📝 You'll be prompted for a passphrase (recommended for security)"
+  echo "🔐 This passphrase will protect your GPG private key"
+  
   cat > /tmp/gpg-gen-key << EOF
 %echo Generating GPG key
 Key-Type: RSA
@@ -46,12 +62,11 @@ Subkey-Length: 4096
 Name-Real: $NAME
 Name-Email: $EMAIL
 Expire-Date: 0
-%no-protection
 %commit
 %echo Done
 EOF
 
-  gpg --batch --generate-key /tmp/gpg-gen-key
+  gpg --generate-key /tmp/gpg-gen-key
   rm -f /tmp/gpg-gen-key
   
   # Get the newly generated key ID
