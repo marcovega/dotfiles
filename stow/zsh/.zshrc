@@ -162,6 +162,11 @@ if command -v fzf >/dev/null 2>&1; then
   source /usr/share/fzf/completion.zsh 2>/dev/null || true
 fi
 
+# zoxide (smart cd replacement)
+if command -v zoxide >/dev/null 2>&1; then
+  eval "$(zoxide init zsh)"
+fi
+
 # SSH connection utilities
 # Source the SSH connections script from dotfiles
 if [[ -f "$HOME/dotfiles/support/utils/ssh-connections.sh" ]]; then
