@@ -1,34 +1,11 @@
 #!/usr/bin/env bash
 
-echo "📺 Setting up tmux with nikolovlazar's configuration..."
+# Load gum-based logging library
+source "$(dirname "$0")/../../support/utils/gum-logger.sh"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+log_header "📺 Setting up tmux with nikolovlazar's configuration"
 
-# Helper functions
-log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-log_success() { echo -e "${GREEN}✅ $1${NC}"; }
-log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-log_error() { echo -e "${RED}❌ $1${NC}"; }
-
-# Function to ask y/n with default to yes
-ask_with_default_yes() {
-  local prompt="$1"
-  local response
-  
-  read -p "$prompt [Y/n]: " response
-  
-  # If empty (just Enter) or starts with Y/y, return true
-  if [[ -z "$response" ]] || [[ "$response" =~ ^[Yy] ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
+# Note: ask_with_default_yes is now handled by prompt_confirm from gum-logger.sh
 
 TMUX_CONFIG_DIR="stow/tmux/.config/tmux"
 REPO_BASE="https://raw.githubusercontent.com/nikolovlazar/dotfiles/main/.config/tmux"
@@ -44,7 +21,7 @@ declare -A tmux_files=(
 )
 
 # Ask if user wants to download/update configuration
-if ask_with_default_yes "Download/update tmux configuration from nikolovlazar's repository?"; then
+  if prompt_confirm "Download/update tmux configuration from nikolovlazar's repository?" true; then
   log_info "Downloading latest tmux configuration from nikolovlazar/dotfiles..."
 else
   log_info "Skipping tmux configuration download"
@@ -90,7 +67,7 @@ log_info "Structure: ~/.config/tmux/ (XDG-compliant)"
 log_info "Downloaded latest version from nikolovlazar's repo"
 
 # Ask if user wants to reload tmux config
-if ask_with_default_yes "Reload tmux configuration now?"; then
+  if prompt_confirm "Reload tmux configuration now?" true; then
   if command -v tmux >/dev/null 2>&1; then
     if tmux source-file ~/.config/tmux/tmux.conf 2>/dev/null; then
       log_success "tmux configuration reloaded!"

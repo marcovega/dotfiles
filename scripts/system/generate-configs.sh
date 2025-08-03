@@ -1,19 +1,9 @@
 #!/usr/bin/env bash
 
-echo "🔧 Generating configs from templates..."
+# Load gum-based logging library
+source "$(dirname "$0")/../../support/utils/gum-logger.sh"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
-# Helper functions
-log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-log_success() { echo -e "${GREEN}✅ $1${NC}"; }
-log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-log_error() { echo -e "${RED}❌ $1${NC}"; }
+log_header "🔧 Generating configs from templates"
 
 # Function to ask for overwrite confirmation
 ask_overwrite() {
@@ -92,7 +82,7 @@ generate_ssh_connections() {
   mkdir -p "$output_dir"
   
   # Check if file exists and ask for overwrite
-  if ! ask_overwrite "$output_file"; then
+  if ! prompt_confirm "File $output_file already exists. Overwrite?" false; then
     log_info "Skipping SSH connections generation (file exists, not overwriting)"
     return 0
   fi

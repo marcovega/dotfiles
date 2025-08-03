@@ -2,18 +2,43 @@
 
 set -e  # Exit on any error
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+# Function to ensure gum is installed before proceeding
+ensure_gum_installed() {
+  if command -v gum >/dev/null 2>&1; then
+    return 0  # gum is already available
+  fi
+  
+  echo "🎨 Installing gum for beautiful terminal UI..."
+  
+  # Create keyring directory
+  sudo mkdir -p /etc/apt/keyrings
+  
+  # Add Charm's GPG key
+  curl -fsSL https://repo.charm.sh/apt/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/charm.gpg
+  
+  # Add Charm's repository
+  echo "deb [signed-by=/etc/apt/keyrings/charm.gpg] https://repo.charm.sh/apt/ * *" | sudo tee /etc/apt/sources.list.d/charm.list
+  
+  # Update package list
+  sudo apt update
+  
+  # Install gum
+  sudo apt install -y gum
+  
+  if command -v gum >/dev/null 2>&1; then
+    echo "✅ gum installed successfully"
+  else
+    echo "❌ Failed to install gum, falling back to basic logging"
+    return 1
+  fi
+}
 
-# Helper functions
-log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-log_success() { echo -e "${GREEN}✅ $1${NC}"; }
-log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-log_error() { echo -e "${RED}❌ $1${NC}"; }
+# Install gum first if needed
+ensure_gum_installed
+
+# Load gum-based logging library
+# Note: Falls back to basic echo functions if gum is not available
+source "$(dirname "$0")/support/utils/gum-logger.sh"
 
 # Initial Setup Functions - Smart Configuration Detection
 
@@ -148,38 +173,9 @@ run_initial_setup() {
   echo ""
 }
 
-# Function to display banner
-show_banner() {
-  echo -e "${BLUE}"
-  echo "┌─────────────────────────────────────┐"
-  echo "│         Dotfiles Installer         │"
-  echo "│      Idempotent & Modular Setup    │"
-  echo "└─────────────────────────────────────┘"
-  echo -e "${NC}"
-}
+# Note: show_banner is now provided by gum-logger.sh
 
-# Function to show available profiles
-show_profiles() {
-  echo ""
-  log_info "Available installation profiles:"
-  echo ""
-  
-  local profiles=(profiles/*.conf)
-  local i=1
-  
-  for profile in "${profiles[@]}"; do
-    if [[ -f "$profile" ]]; then
-      local profile_name=$(basename "$profile" .conf)
-      # Source the profile to get description
-      source "$profile"
-      echo "  $i) ${PROFILE_NAME} - ${PROFILE_DESCRIPTION}"
-      ((i++))
-    fi
-  done
-  
-  echo "  $i) Custom - Choose individual components"
-  echo ""
-}
+# Note: Profile selection is now handled by gum interactive chooser in main()
 
 # Function to run installation scripts
 run_scripts() {
@@ -313,11 +309,10 @@ setup_environment_files() {
   log_info "Checking environment files..."
   
   # SSH connections environment
-  if [[ ! -f ".env.ssh" ]] && [[ -f "support/examples/env.ssh.example" ]]; then
-    log_info "SSH connections environment file not found (optional)"
-    echo "💡 Tip: For SSH shortcuts, copy and customize:"
-    echo "   cp support/examples/env.ssh.example .env.ssh"
-  fi
+  log_info "SSH connections setup: Run generate-configs.sh to create SSH shortcuts"
+  echo "💡 Tip: For SSH shortcuts, generate and customize:"
+  echo "   ./scripts/system/generate-configs.sh"
+  echo "   Then edit ~/.config/env-files/.ssh-connections"
 }
 
 # Function to run custom installation
@@ -331,95 +326,72 @@ run_custom_installation() {
   local selected_applications=()
   
   # System packages
-  if read -p "Install system packages? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Install system packages?" false; then
     selected_scripts+=("scripts/system/packages.sh")
     selected_scripts+=("scripts/system/generate-configs.sh")
   fi
-  echo ""
   
   # Security (SSH/GPG keys)
-  if read -p "Setup SSH and GPG keys? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup SSH and GPG keys?" false; then
     selected_scripts+=("scripts/security/ssh-keys.sh")
     selected_scripts+=("scripts/security/gpg-keys.sh")
   fi
-  echo ""
   
   # Shell setup
-  if read -p "Setup Zsh environment? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup Zsh environment?" false; then
     selected_scripts+=("scripts/shell/zsh-setup.sh")
     selected_configs+=("stow/zsh")
   fi
-  echo ""
   
   # Git
-  if read -p "Setup Git configuration? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
-# Git configuration is applied automatically during initial setup
+  if prompt_confirm "Setup Git configuration?" false; then
+    # Git configuration is applied automatically during initial setup
+    log_info "Git configuration will be applied automatically"
   fi
-  echo ""
   
   # Terminal colors
-  if read -p "Setup terminal colors? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup terminal colors?" false; then
     selected_configs+=("stow/terminal")
   fi
-  echo ""
   
   # Node.js
-  if read -p "Setup Node.js environment? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup Node.js environment?" false; then
     selected_scripts+=("scripts/development/node.sh")
   fi
-  echo ""
   
   # PHP
-  if read -p "Setup PHP/Laravel environment? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup PHP/Laravel environment?" false; then
     selected_scripts+=("scripts/development/php.sh")
   fi
-  echo ""
   
   # tmux
-  if read -p "Setup tmux with nikolovlazar's config? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup tmux with nikolovlazar's config?" false; then
     selected_scripts+=("scripts/development/tmux.sh")
     selected_configs+=("stow/tmux")
   fi
-  echo ""
   
   # Neovim
-  if read -p "Setup Neovim with nikolovlazar's config? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup Neovim with nikolovlazar's config?" false; then
     selected_scripts+=("scripts/development/neovim.sh")
     selected_scripts+=("scripts/development/lazygit.sh")
     selected_configs+=("stow/nvim")
   fi
-  echo ""
   
   # VSCode
-  if read -p "Setup VSCode? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup VSCode?" false; then
     selected_scripts+=("scripts/development/vscode.sh")
     selected_configs+=("stow/vscode")
   fi
-  echo ""
   
   # Development tools
-  if read -p "Setup development tools (SSH connections)? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup development tools (SSH connections)?" false; then
     selected_scripts+=("scripts/system/generate-configs.sh")
   fi
-  echo ""
   
   # WordPress WSL dependencies
-  if read -p "Setup WordPress Local WP dependencies for WSL? (y/n): " -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo ""
+  if prompt_confirm "Setup WordPress Local WP dependencies for WSL?" false; then
     selected_scripts+=("scripts/development/wordpress-wsl.sh")
   fi
-  echo ""
   
   # Run selected components
   if [[ ${#selected_scripts[@]} -gt 0 ]]; then
@@ -441,8 +413,7 @@ main() {
   
   # Check if we're in the right directory
   if [[ ! -f "install.sh" ]] || [[ ! -d "profiles" ]]; then
-    log_error "Please run this script from the dotfiles directory"
-    exit 1
+    log_fatal "Please run this script from the dotfiles directory"
   fi
   
   # Run initial smart setup FIRST
@@ -458,41 +429,53 @@ main() {
   # Setup environment files
   setup_environment_files
   
-  # Show profiles
-  show_profiles
+  # Show and select profiles using gum
+  local profiles=(profiles/*.conf)
+  local profile_options=()
   
-  # Get user choice
-  read -p "Select a profile (number): " choice
+  log_info "Available installation profiles:"
   echo ""
   
-  # Handle profile selection
-  local profiles=(profiles/*.conf)
-  local profile_count=${#profiles[@]}
-  
-  if [[ "$choice" =~ ^[0-9]+$ ]] && [[ $choice -ge 1 ]] && [[ $choice -le $profile_count ]]; then
-    # Load selected profile
-    local selected_profile="${profiles[$((choice-1))]}"
-    source "$selected_profile"
-    
-    log_info "Installing profile: $PROFILE_NAME"
-    log_info "Description: $PROFILE_DESCRIPTION"
-    echo ""
-    
-    # Run installation
-    run_scripts "${SCRIPTS[@]}"
-    stow_configs "${CONFIGS[@]}"
-    
-    if [[ -n "${APPLICATIONS:-}" ]]; then
-      setup_applications "${APPLICATIONS[@]}"
+  # Build profile options for gum
+  for profile in "${profiles[@]}"; do
+    if [[ -f "$profile" ]]; then
+      source "$profile"
+      profile_options+=("$PROFILE_NAME - $PROFILE_DESCRIPTION")
     fi
-    
-  elif [[ $choice -eq $((profile_count + 1)) ]]; then
+  done
+  
+  # Add custom option
+  profile_options+=("Custom Installation - Choose your own components")
+  
+  # Use gum to select profile
+  selected_option=$(prompt_choose "Choose an installation profile:" "${profile_options[@]}")
+  
+  # Handle selection
+  if [[ "$selected_option" == "Custom Installation"* ]]; then
     # Custom installation
     run_custom_installation
-    
   else
-    log_error "Invalid selection"
-    exit 1
+    # Find and load the selected profile
+    local i=0
+    for profile in "${profiles[@]}"; do
+      if [[ -f "$profile" ]]; then
+        source "$profile"
+        if [[ "$selected_option" == "$PROFILE_NAME"* ]]; then
+          log_info "Installing profile: $PROFILE_NAME"
+          log_info "Description: $PROFILE_DESCRIPTION"
+          echo ""
+          
+          # Run installation
+          run_scripts "${SCRIPTS[@]}"
+          stow_configs "${CONFIGS[@]}"
+          
+          if [[ -n "${APPLICATIONS:-}" ]]; then
+            setup_applications "${APPLICATIONS[@]}"
+          fi
+          break
+        fi
+      fi
+    done
   fi
   
   echo ""
@@ -502,7 +485,7 @@ main() {
   echo "  1. Restart your terminal or run: source ~/.zshrc"
   echo "  2. If you're using VS Code, restart it to apply settings"
   echo "  3. If this is your first time, you may need to configure:"
-  echo "     - SSH connections: .env.ssh (in project root)"
+  echo "     - SSH connections: ~/.config/env-files/.ssh-connections (via stow/shell)"
   echo ""
   log_info "You can run this installer again anytime to add new components!"
 }

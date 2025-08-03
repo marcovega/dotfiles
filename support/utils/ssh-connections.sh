@@ -1,7 +1,7 @@
 #!/usr/bin/env zsh
 
 # SSH Connection Aliases
-# This script reads connections from .env.ssh-connections file
+# This script reads connections from ~/.config/env-files/.ssh-connections file
 # Usage: ssh-to <alias> or ssh-drop <alias>
 
 # Declare associative array for SSH connections

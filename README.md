@@ -90,24 +90,33 @@ dotfiles/
 git clone https://github.com/yourusername/dotfiles.git
 cd dotfiles
 
-# Run the installer
+# Run the installer (automatically installs gum for beautiful UI)
 ./install.sh
 ```
 
 ### Automatic Setup
 
-The installer now includes **intelligent initial setup** that:
+The installer now includes **intelligent initial setup** and **beautiful terminal UI** that:
 
 - ✅ **Auto-detects existing GPG keys** and extracts your name/email
 - ✅ **Auto-configures git globally** with proper signing
 - ✅ **Handles SSH/GPG key generation** if needed
 - ✅ **Direct configuration** - no intermediate environment files needed
+- ✅ **Beautiful UI** - Powered by [Charm's gum](https://github.com/charmbracelet/gum) for interactive prompts and styled output
+- ✅ **Smart fallbacks** - Works with or without gum for maximum compatibility
 
 Simply run:
 
 ```bash
 ./install.sh
 ```
+
+The installer will automatically:
+
+1. **Install gum** for beautiful terminal UI (if not already available)
+2. **Present interactive profile selection** with styled choosers
+3. **Show progress** with colored, emoji-enhanced logging
+4. **Guide you through** component selection with intuitive prompts
 
 **Manual Configuration** (only if auto-detection fails):
 
@@ -118,13 +127,34 @@ git config --global user.email "your.email@example.com"
 git config --global user.signingkey "YOUR_GPG_KEY_ID"
 
 # SSH connections (optional)
-cp support/examples/env.ssh.example .env.ssh
-nano .env.ssh  # Add your servers
+./scripts/system/generate-configs.sh  # Generate SSH template
+stow -d stow -t $HOME shell           # Deploy config
+nano ~/.config/env-files/.ssh-connections  # Add your servers
 ```
 
 ## 🎯 Key Enhancements
 
-### 1. **Full GNU Stow Compatibility**
+### 1. **Beautiful Terminal UI with Gum Integration**
+
+Experience installation with a modern, interactive interface:
+
+- **🎨 Styled Output**: Colored, emoji-enhanced logging with gum's beautiful formatting
+- **✨ Interactive Prompts**: Gum-powered confirmation dialogs and choosers
+- **📋 Smart Profile Selection**: Visual menu for choosing installation profiles
+- **🔄 Progress Indicators**: Clear feedback during installation steps
+- **🛡️ Graceful Fallbacks**: Automatically falls back to basic logging if gum unavailable
+
+```bash
+# The installer automatically sets up gum and provides:
+✅ Success messages in green with checkmarks
+ℹ️ Info messages in blue with icons
+⚠️ Warnings in yellow with alerts
+❌ Errors in red with clear indicators
+🎯 Interactive profile chooser
+🤔 Yes/No confirmations with visual buttons
+```
+
+### 2. **Full GNU Stow Compatibility**
 
 Each package in `stow/` can be managed independently:
 
@@ -145,7 +175,7 @@ stow -d stow -t $HOME -D nvim
 stow -d stow -t $HOME -R zsh
 ```
 
-### 2. **Simplified Configuration System**
+### 3. **Simplified Configuration System**
 
 - **Templates**: `support/templates/` - Configuration templates with placeholders
 - **Git Configuration**: Auto-detected from GPG and applied directly via `git config --global`
@@ -161,14 +191,14 @@ stow -d stow -t $HOME shell           # Deploy shell configs including env-files
 # SSH functions (ssh-to, ssh-reload) available via zshrc
 ```
 
-### 3. **XDG Base Directory Compliance**
+### 4. **XDG Base Directory Compliance**
 
 - **VSCode**: `~/.config/Code/User/settings.json`
 - **Neovim**: `~/.config/nvim/`
 - **Proper application data organization**
 - **Cross-platform path handling**
 
-### 4. **Enhanced Organization**
+### 5. **Enhanced Organization**
 
 - **Pure Stow Packages**: Only actual dotfiles in `stow/`
 - **Support Files**: Templates, examples, data, and utilities separated
@@ -384,8 +414,8 @@ stow -d stow -t $HOME -S package_name                     # Then stow
 ### Gitignored Files
 
 ```gitignore
-# Environment files (contain sensitive data)
-.env.ssh
+# Generated SSH connections config (contains sensitive data)
+stow/shell/.config/env-files/.ssh-connections
 
 # Public keys (contain personal details)
 github-public-keys.txt
@@ -510,8 +540,8 @@ ssh-reload                           # Reload connections after editing
 # Check template processing
 bash -x ./scripts/system/generate-configs.sh
 
-# Verify SSH environment file
-cat .env.ssh  # Check content
+# Verify SSH connections file
+cat ~/.config/env-files/.ssh-connections  # Check content
 ```
 
 ### Stow Package Verification
@@ -527,18 +557,21 @@ stow -d stow -t /tmp/test_home -n -S package_name
 ## 📊 System Requirements
 
 - **OS**: Ubuntu 20.04+ (tested on Ubuntu 22.04/24.04)
-- **Dependencies**: None (installer installs required packages including `stow`)
+- **Dependencies**: None (installer automatically installs required packages including `stow` and `gum`)
 - **Disk Space**: ~500MB for full installation
 - **Network**: Internet connection for external configs and packages
+- **Terminal**: Any modern terminal (enhanced experience with color support)
 
 ## 🎯 Benefits Summary
 
 ### For Users
 
+- **Beautiful Interface**: Modern, interactive terminal UI powered by gum
 - **True Stow Compatibility**: Standard GNU Stow commands work perfectly
 - **Enhanced Security**: Template system prevents credential exposure
 - **Better Organization**: Clear separation of configs, templates, and data
 - **Cross-Platform**: Proper Windows and Linux support
+- **Intuitive Experience**: Visual prompts and clear progress indicators
 
 ### For Developers/AI
 
@@ -547,4 +580,4 @@ stow -d stow -t /tmp/test_home -n -S package_name
 - **Maintainable**: Template system and idempotent scripts
 - **Testable**: Each stow package can be tested independently
 
-This enhanced dotfiles system provides a production-ready solution with true GNU Stow compatibility, improved security through templates, and better organization for long-term maintainability. The modular design ensures reliability while supporting both simple and complex development environments.
+This enhanced dotfiles system provides a production-ready solution with true GNU Stow compatibility, improved security through templates, better organization for long-term maintainability, and a beautiful terminal interface powered by gum. The modular design ensures reliability while supporting both simple and complex development environments with an intuitive, modern user experience.

@@ -4,7 +4,10 @@
 if [[ "${1:-}" != "--auto" ]]; then
   echo "💻 VS Code extensions setup"
   echo ""
-  if ! read -p "Install/update VS Code extensions? (y/n): " -n 1 -r || [[ ! $REPLY =~ ^[Yy]$ ]]; then
+  # Load gum-based logging library
+source "$(dirname "$0")/../../support/utils/gum-logger.sh"
+
+if ! prompt_confirm "Install/update VS Code extensions?" true; then
     echo ""
     echo "⏭️  Skipping VS Code extensions setup."
     exit 0

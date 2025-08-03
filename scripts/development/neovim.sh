@@ -1,34 +1,11 @@
 #!/usr/bin/env bash
 
-echo "📝 Setting up Neovim and configuration..."
+# Load gum-based logging library
+source "$(dirname "$0")/../../support/utils/gum-logger.sh"
 
-# Colors for output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+log_header "📝 Setting up Neovim and configuration"
 
-# Helper functions
-log_info() { echo -e "${BLUE}ℹ️  $1${NC}"; }
-log_success() { echo -e "${GREEN}✅ $1${NC}"; }
-log_warning() { echo -e "${YELLOW}⚠️  $1${NC}"; }
-log_error() { echo -e "${RED}❌ $1${NC}"; }
-
-# Function to ask y/n with default to yes
-ask_with_default_yes() {
-  local prompt="$1"
-  local response
-  
-  read -p "$prompt [Y/n]: " response
-  
-  # If empty (just Enter) or starts with Y/y, return true
-  if [[ -z "$response" ]] || [[ "$response" =~ ^[Yy] ]]; then
-    return 0
-  else
-    return 1
-  fi
-}
+# Note: ask_with_default_yes is now handled by prompt_confirm from gum-logger.sh
 
 NVIM_VERSION_FILE="/opt/nvim/bin/nvim"
 NVIM_TARBALL="nvim-linux-x86_64.tar.gz"
@@ -160,7 +137,7 @@ log_info "Neovim binary setup completed!"
 echo ""
 
 # Ask about configuration
-if ask_with_default_yes "Download/update Neovim configuration from nikolovlazar's repository?"; then
+  if prompt_confirm "Download/update Neovim configuration from nikolovlazar's repository?" true; then
   setup_neovim_config
 else
   log_info "Skipping Neovim configuration download"

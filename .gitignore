@@ -1,16 +1,5 @@
-# SSH connections (contains sensitive IPs and usernames)
-zsh/.env.ssh-connections
-configs/development/.env.ssh-connections
-
-# Git configuration (contains personal details)
-configs/git/.gitconfig
-
 # Public keys (contains personal details)
 github-public-keys.txt
-
-# Downloaded configs (always fetched fresh from remote repos)
-configs/nvim/
-configs/tmux/
 
 # Env files
 .env.*
