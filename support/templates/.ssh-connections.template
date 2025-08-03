@@ -1,0 +1,20 @@
+# SSH Connections Configuration
+# Copy this to ~/.config/env-files/.ssh-connections and customize
+# 
+# Format:
+# [alias-name]
+# ssh user@hostname
+#
+# Example connections:
+
+[localhost]
+ssh root@localhost
+
+[example-server]
+ssh user@example.com
+
+[example-with-port]
+ssh user@example.com -p 2222
+
+[example-with-key]
+ssh -i ~/.ssh/my-key user@example.com
