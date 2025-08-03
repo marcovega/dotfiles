@@ -7,6 +7,9 @@ fi
 
 ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 
+# Terminal color support
+export COLORTERM=truecolor
+
 # fnm
 FNM_PATH="/home/kito/.local/share/fnm"
 if [ -d "$FNM_PATH" ]; then

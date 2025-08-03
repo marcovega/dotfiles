@@ -8,3 +8,6 @@ github-public-keys.txt
 # Generated environment configuration files (contain sensitive information)
 stow/shell/.config/env-files/*
 !stow/shell/.config/env-files/.gitkeep
+
+# tmux plugins (auto-downloaded by TPM)
+stow/tmux/.config/tmux/plugins/
